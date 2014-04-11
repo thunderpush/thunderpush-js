@@ -1,0 +1,9 @@
+<script src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+<script src="../dist/thunderpush.js"></script>
+
+<script type="text/javascript">
+Thunder.connect("localhost:8080", "key", ["test"], {log: true, user: 'somerandomid'});
+Thunder.listen(function(data) {
+    console.log(data);
+});
+</script>

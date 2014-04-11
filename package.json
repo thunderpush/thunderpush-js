@@ -1,0 +1,46 @@
+{
+  "name": "thunderpush",
+  "description": "Thunderpush javascript client",
+  "version": "0.9.1",
+  "filename": "thunderpush.min.js",
+  "main": "./dist/thunderpush.min.js",
+  "homepage": "https://github.com/thunderpush/thunderpush-js",
+  "author": "Krzysztof Jagiełło",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thunderpush/thunderpush-js/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/thunderpush/thunderpush-js.git"
+  },
+  "engines": {
+    "node": ">= 0.9"
+  },
+  "keywords": [
+    "thunderpush",
+    "push"
+  ],
+  "maintainers": [
+    {
+      "name": "Krzysztof Jagiełło"
+    },
+    {
+      "name": "Ryan Schumacher"
+    }
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "grunt-cli": ">= 0.1.7",
+    "grunt-contrib-concat": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-bower": "*",
+    "grunt-bower-task": "*",
+    "grunt-conventional-changelog": "0.0.12",
+    "grunt-zip": "*"
+  },
+  "scripts": {
+    "test": "grunt travis --verbose"
+  }
+}
