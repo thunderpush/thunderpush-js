@@ -1,7 +1,7 @@
 {
   "name": "thunderpush",
   "description": "Thunderpush javascript client",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "filename": "thunderpush.min.js",
   "main": "./dist/thunderpush.min.js",
   "homepage": "https://github.com/thunderpush/thunderpush-js",
@@ -37,10 +37,8 @@
     "grunt-contrib-uglify": "*",
     "grunt-bower": "*",
     "grunt-bower-task": "*",
-    "grunt-karma": "latest",
     "grunt-conventional-changelog": "0.0.12",
-    "grunt-zip": "*",
-    "karma-jasmine": "^0.1.5"
+    "grunt-zip": "*"
   },
   "scripts": {
     "test": "grunt travis --verbose"

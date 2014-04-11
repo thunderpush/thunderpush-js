@@ -64,39 +64,6 @@ module.exports = function(grunt) {
         }
       }
     },
-    karma: {
-      options: {
-        configFile: 'karma.conf.js'
-      },
-      build: {
-        singleRun: true,
-        autoWatch: false
-      },
-      debug: {
-        singleRun: false,
-        autoWatch: true,
-        browsers: ['Chrome']
-      },
-      travis: {
-        singleRun: true,
-        autoWatch: false,
-        browsers: ['Firefox']
-      },
-      travisUnderscore: {
-        singleRun: true,
-        autoWatch: false,
-        browsers: ['Firefox'],
-        configFile: 'karma.underscore.conf.js',
-      },
-      buildUnderscore: {
-        configFile: 'karma.underscore.conf.js',
-        singleRun: true,
-        autoWatch: false
-      },
-      dev: {
-        autoWatch: true
-      }
-    },
     changelog: {
       options: {
         dest: 'CHANGELOG.md'
@@ -117,8 +84,6 @@ module.exports = function(grunt) {
 
   grunt.renameTask("bower", "bowerInstall");
 
-  grunt.loadNpmTasks('grunt-karma');
-
   grunt.loadNpmTasks('grunt-conventional-changelog');
 
   grunt.loadNpmTasks('grunt-zip');
@@ -128,13 +93,7 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['build']);
 
   // Build task.
-  grunt.registerTask('build', ['bowerInstall', 'karma:build', 'karma:buildUnderscore', 'concat', 'uglify']);
-
-  grunt.registerTask('test', ['karma:build', 'karma:buildUnderscore']);
-
-  grunt.registerTask('test-debug', ['karma:debug']);
-
-  grunt.registerTask('travis', ['karma:travis', 'karma:travisUnderscore']);
+  grunt.registerTask('build', ['bowerInstall', 'concat', 'uglify']);
 
   // Provides the "bump" task.
   grunt.registerTask('bump', 'Increment version number', function() {

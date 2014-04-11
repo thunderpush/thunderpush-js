@@ -1,6 +1,6 @@
 /**
  * Thunderpush javascript client
- * @version v0.9.0 - 2014-03-25 * @link https://github.com/thunderpush/thunderpush-js
+ * @version v0.9.0 - 2014-04-11 * @link https://github.com/thunderpush/thunderpush-js
  * @author Krzysztof Jagiełło
  * @license MIT License, http://www.opensource.org/licenses/MIT
  */var isMSIE = /*@cc_on!@*/0;

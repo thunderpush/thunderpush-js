@@ -1,10 +1,11 @@
+
 var isMSIE = /*@cc_on!@*/0;
 var Thunder = new function() {
     this.channels = [];
     this.handlers = [];
-    
+
     this.reconnect_delays = [1000, 2500, 5000, 10000, 30000, 60000];
-    
+
     this.options = {
         // verbose?
         log: false,
@@ -21,7 +22,7 @@ var Thunder = new function() {
         concat           = ArrayProto.concat,
         toString         = ObjProto.toString,
         hasOwnProperty   = ObjProto.hasOwnProperty;
-     
+
       var
         nativeForEach      = ArrayProto.forEach,
         nativeMap          = ArrayProto.map,
@@ -166,7 +167,7 @@ var Thunder = new function() {
             this.socket.send("UNSUBSCRIBE " + channel);
 
             var pos = _.indexOf(this.channels, channel);
-            
+
             if(pos !== -1) {
                 channels = this.channels.splice(pos, 1);
             }
@@ -193,7 +194,7 @@ var Thunder = new function() {
         var that = this;
 
         // make a connection
-        this.socket = new SockJS(this.server, undefined, 
+        this.socket = new SockJS(this.server, undefined,
             {'debug': this.options.log});
 
         this.socket.onopen = function(e) {
