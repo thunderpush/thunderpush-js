@@ -1,0 +1,211 @@
+<html>
+  <head>
+
+    <title>AngularJS Example</title>
+
+    <link rel="stylesheet" type="text/css" href="http://cdn.jsdelivr.net/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="http://cdn.jsdelivr.net/fontawesome/4.0.3/css/font-awesome.min.css">
+
+    <style>
+      body { padding: 20px 0;}
+      .thunderpush-bolt {
+        float: left;
+        background-image: url('https://github-camo.global.ssl.fastly.net/8f9e13c903c0d7e05dd1623fbeec5dc0088847a7/687474703a2f2f692e696d6775722e636f6d2f4367474c3565552e706e67');
+        background-repeat: no-repeat;
+        background-size: 131px 30px;
+        width: 20px;
+        height: 30px;
+      }
+      .thunderpush-bolt.not-connected {
+        filter: url(filters.svg#grayscale); /* Firefox 3.5+ */
+        filter: gray; /* IE6-9 */
+        -webkit-filter: grayscale(1); /* Google Chrome, Safari 6+ & Opera 15+ */
+      }
+      #apiConsole iframe{
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    </style>
+
+    <script src="http://cdn.sockjs.org/sockjs-0.3.4.min.js"></script>
+    <script src="../dist/thunderpush.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.12/angular.min.js"></script>
+  </head>
+  <body ng-app ng-controller="AppCtrl">
+    <div class="container container-fluid">
+      <div class="row">
+        <div ng-class="{'col-md-12': !isApiConsoleShown, 'col-md-6': isApiConsoleShown}">
+          <button ng-show="!isApiConsoleShown" ng-click="isApiConsoleShown = true" class="btn btn-lg btn-default pull-right console-btn">Show API Console <i class="fa fa-toggle-left"></i></button>
+          <button ng-show="isApiConsoleShown" ng-click="isApiConsoleShown = false" class="btn btn-lg btn-default pull-right console-btn">Hide API Console <i class="fa fa-toggle-right"></i></button>
+
+          <h2 class="page-header">
+            <div ng-class="{'connected':connected, 'not-connected':!connected}" class="thunderpush-bolt"></div>
+            Thunderpush Server
+          </h2>
+          <form ng-class="{'form-inline':'!isApiConsoleShown'}" role="form" id="thunderpush-status">
+            <div class="form-group">
+              <input ng-model="thunderHost" ng-disabled="connected" class="form-control" placeholder="localhost:8080">
+            </div>
+            <div class="form-group">
+              <input ng-model="thunderKey" ng-disabled="connected" class="form-control" placeholder="key">
+            </div>
+            <div class="form-group">
+              <input ng-model="thunderUserId" ng-disabled="connected" class="form-control" placeholder="user-id">
+            </div>
+            <button ng-show="!connected" ng-click="connect()" class="btn btn-default">Connect</button>
+            <button ng-show="connected" ng-click="disconnect()" class="btn btn-danger">Disconnect</button>
+          </form>
+
+          <div class="row">
+            <div>
+              <form class="form-inline pull-right">
+                <input ng-disabled="!connected" ng-model="channelName" class="form-control input-sm" placeholder="myChannel">
+                <button ng-disabled="!connected" ng-click="subscribe()" class="btn btn-sm btn-success"><i class="fa fa-plus"></i> subscribe</button>
+              </form>
+              <h2 class="page-header">Channels</h2>
+              <table class="table table-striped">
+                <thead>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="channel in channels.sort()">
+                    <td class="col-md-11">{{channel}}</td>
+                    <td class="col-md-1 tex-center">
+                      <button ng-click="unsubscribe(channel)" class="btn btn-xs btn-danger"><i class="fa fa-times"></i> unsubscribe</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <button ng-click="log = []" class="btn btn-sm btn-info pull-right">clear log</button>
+              <h2 class="page-header">Log</h2>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="entry in log | orderBy:'-ts'">
+                    <td style="">{{entry.ts | date:'hh:mm:ss'}}</td><td>{{entry.evt}}</td><td>{{entry.msg}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="apiConsole" class="col-md-6" ng-show="isApiConsoleShown">
+          <iframe src="apiconsole.html"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      var ngScope = [];
+
+      function logEntry(evt, msg) {
+        ngScope.log.push({
+          ts: new Date(),
+          evt: evt,
+          msg: msg
+        });
+      }
+
+      Thunder.onSockOpen(function(e) {
+        logEntry('connected', 'Connected '+this.socket.protocol+': '+e);
+
+        ngScope.$apply(function() {
+          ngScope.connected = true;
+        });
+      });
+
+      Thunder.onSockError(function(e) {
+        logEntry('error', e);
+
+        ngScope.$apply(function() {});
+      });
+
+      Thunder.onSockClose(function(e) {
+        logEntry('disconnected', 'Disconnected '+this.socket.protocol+': '+e);
+
+        ngScope.$apply(function() {
+          ngScope.connected = false;
+        });
+      });
+
+      Thunder.onSockMessage(function(e) {
+        logEntry('message', e);
+
+        ngScope.$apply(function() {});
+      });
+
+      Thunder.listen(function(data) {
+        logEntry('message listener', angular.toJson(data))
+
+        ngScope.$apply();
+      });
+
+      function AppCtrl($scope) {
+        ngScope = $scope;
+
+        $scope.status = 'Not Connected';
+        $scope.thunderHost = 'localhost:8080';
+        $scope.thunderKey = 'key';
+        $scope.thunderUserId = Math.floor(Math.random() * 1000 + 1000);
+
+        $scope.log = [];
+        $scope.channels = Thunder.channels;
+
+        $scope.subscribe = function() {
+          var channelName = String($scope.channelName);
+          $scope.channelName = '';
+          Thunder.subscribe(channelName,
+            function(tp, msg) {
+              $scope.channels = tp.channels;
+
+              logEntry.call($scope, 'subscribe', msg+': '+channelName);
+            }, function(tp, msg) {
+              logEntry.call($scope, 'subscribe', msg+': '+channelName);
+            });
+        }
+
+        $scope.unsubscribe = function(channelName) {
+          Thunder.unsubscribe(channelName,
+            function(tp, msg) {
+              $scope.channels = tp.channels;
+              logEntry.call($scope, 'unsubscribe', msg+': '+channelName);
+            }, function(tp, msg) {
+              logEntry.call($scope, 'unsubscribe', msg+': '+channelName);
+            });
+        }
+
+
+        $scope.connect = function() {
+          var host = $scope.thunderHost;
+          var key = $scope.thunderKey;
+          var userId = $scope.thunderUserId;
+
+          if(host && key && userId) {
+            Thunder.connect(host, key, [], {log: true, user: userId});
+          }
+        }
+
+        $scope.disconnect = function() {
+          $scope.channels = [];
+
+          Thunder.disconnect();
+        }
+
+        $scope.$watch(Thunder, function(newVal, oldVal) {
+          console.log(newVal, oldVal);
+        });
+
+      }
+
+    </script>
+  </body>
+</html
