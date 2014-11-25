@@ -3,6 +3,7 @@ var isMSIE = /*@cc_on!@*/0;
 var Thunder = new function() {
     this.channels = [];
     this.handlers = [];
+    this.handler_events = [];
 
     this.reconnect_delays = [1000, 2500, 5000, 10000, 30000, 60000];
 
@@ -11,6 +12,23 @@ var Thunder = new function() {
         log: false,
         retry: true
     };
+
+    var Channel = (function() {
+        function Channel(thunder, name) {
+            this.thunder = thunder;
+            this.name = name;
+        }
+
+        Channel.prototype.bind = function(evt, fn) {
+            this.thunder.bind(this.name, evt, fn);
+        };
+
+        Channel.prototype.unbind = function(evt, fn) {
+            this.thunder.unbind(this.name, evt, fn);
+        };
+
+        return Channel;
+    })();
 
 
     /** Underscore Functions **/
@@ -142,13 +160,13 @@ var Thunder = new function() {
 
         if(this.socket.readyState === SockJS.OPEN) {
             if(_.indexOf(this.channels, channel) !== -1) {
-                typeof success === 'function' && success(this, 'Channel already subscribed');
+                typeof success === 'function' && success(new Channel(this, channel), 'Channel already subscribed');
                 return true;
             }
 
             this.socket.send("SUBSCRIBE " + channel);
             this.channels.push(channel);
-            typeof success === 'function' && success(this, 'Channel subscribed');
+            typeof success === 'function' && success(new Channel(this, channel), 'Channel subscribed');
             return true;
         }
 
@@ -190,6 +208,64 @@ var Thunder = new function() {
         this.handlers.push(handler);
     };
 
+    /**
+     * Add new handler to event in channel
+     * 
+     * @example
+     *   ThunderPush.bind('my-channel', 'my-first-event', function(data, channel, event){
+     *       console.log(arguments);
+     *   });
+     *
+     *   ThunderPush.bind('my-channel', 'my-second-event', function(data){
+     *       alert("Second event triggered: " + JSON.stringify(data) );
+     *   });
+     *
+     * @param [String] channel
+     *   The Channel name
+     *
+     * @param [String] event
+     *   The event name to identify the triggers
+     *
+     * @param [Function] handler
+     *   Function that should be executed
+     *
+     */
+    this.bind = function(channel, event, handler) {
+        this.log("New handler has been registered to event '"+event+"' and channel '"+channel+"'.");
+        this.handler_events.push([channel, event, handler]);
+    };
+
+    /**
+     * Remove a handler event defined in hendler_events collection.
+     *
+     * @example
+     *   ThunderPush.unbind('my-channel', 'my-first-event', fn_reference);
+     *   ThunderPush.unbind('my-channel', 'my-second-event');
+     *
+     * @param [String] channel
+     *   The Channel name
+     *
+     * @param [String] event
+     *   The event name to identify the triggers
+     *
+     * @param [Function] handler
+     *   Function that should be executed
+     *
+     * @return [Array] with removed events
+     */
+    this.unbind = function(channel, event, handler) {
+        var length, i, removes = [];
+        this.log("Removes handler registered to event '"+event+"' and channel '"+channel+"'.");
+        length = this.handler_events.length;
+        for (i=(length-1); i>=0; length--) {
+            if (this.handler_events[i][0] === channel && (!event || this.handler_events[i][1] === event) && (!handler || this.handler_events[i][2] === handler) ) {
+                removes.push(this.handler_events.splice(i,1));
+                i--;
+            }
+        }
+        return removes;
+    };
+
     this.makeConnection = function() {
         var that = this;
 
@@ -213,9 +289,12 @@ var Thunder = new function() {
         }
 
         this.socket.onmessage = function(e) {
+            var i, length;
             that.log("Message has been received", e.data);
 
             if (that.onmessage) that.onmessage.call(that, e);
+            channel = e.data.channel;
+            event = e.data.event;
 
             try {
                 // try to parse the message as json
@@ -226,8 +305,19 @@ var Thunder = new function() {
                 // not json, leave it as is
             }
 
-            for (var i = 0; i < that.handlers.length; i++) {
-                that.handlers[i](e.data);
+            if ( event   !== null && event   !== undefined &&
+                 channel !== null && channel !== undefined) {
+                length = that.handler_events.length;
+                for (i = 0; i < length; i++) {
+                    if ( that.handler_events[i][0] === channel && that.handler_events[i][1] === event) {
+                        that.handler_events[i][2](e.data, channel, event);
+                    }
+                }
+            }else{
+                length = that.handlers.length;
+                for (i = 0; i < length; i++) {
+                    that.handlers[i](e.data);
+                }
             }
         }
 
