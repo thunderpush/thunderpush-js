@@ -13,6 +13,23 @@ var Thunder = new function() {
         retry: true
     };
 
+    var Channel = (function() {
+        function Channel(thunder, name) {
+            this.thunder = thunder;
+            this.name = name;
+        }
+
+        Channel.prototype.bind = function(evt, fn) {
+            this.thunder.bind(this.name, evt, fn);
+        };
+
+        Channel.prototype.unbind = function(evt, fn) {
+            this.thunder.unbind(this.name, evt, fn);
+        };
+
+        return Channel;
+    })();
+
 
     /** Underscore Functions **/
     var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
@@ -143,13 +160,13 @@ var Thunder = new function() {
 
         if(this.socket.readyState === SockJS.OPEN) {
             if(_.indexOf(this.channels, channel) !== -1) {
-                typeof success === 'function' && success(this, 'Channel already subscribed');
+                typeof success === 'function' && success(new Channel(this, channel), 'Channel already subscribed');
                 return true;
             }
 
             this.socket.send("SUBSCRIBE " + channel);
             this.channels.push(channel);
-            typeof success === 'function' && success(this, 'Channel subscribed');
+            typeof success === 'function' && success(new Channel(this, channel), 'Channel subscribed');
             return true;
         }
 
@@ -239,9 +256,9 @@ var Thunder = new function() {
     this.unbind = function(channel, event, handler) {
         var length, i, removes = [];
         this.log("Removes handler registered to event '"+event+"' and channel '"+channel+"'.");
-        length = this.handler_events;
-        for (i=length; i>length; length--) {
-            if (this.handler_events[i][0] === channel && this.handler_events[i][1] === event && (!handler || this.handler_events[i][2] === handler) ) {
+        length = this.handler_events.length;
+        for (i=(length-1); i>=0; length--) {
+            if (this.handler_events[i][0] === channel && (!event || this.handler_events[i][1] === event) && (!handler || this.handler_events[i][2] === handler) ) {
                 removes.push(this.handler_events.splice(i,1));
                 i--;
             }
@@ -276,22 +293,24 @@ var Thunder = new function() {
             that.log("Message has been received", e.data);
 
             if (that.onmessage) that.onmessage.call(that, e);
+            channel = e.data.channel;
+            event = e.data.event;
 
             try {
                 // try to parse the message as json
-                var json_data = JSON.parse(e.data.payload || e.data);
+                var json_data = JSON.parse(e.data.payload);
                 e.data = json_data;
             }
             catch(e) {
                 // not json, leave it as is
             }
 
-            if ( e.data.event   !== null && e.data.event   !== undefined &&
-                 e.data.channel !== null && e.data.channel !== undefined) {
+            if ( event   !== null && event   !== undefined &&
+                 channel !== null && channel !== undefined) {
                 length = that.handler_events.length;
                 for (i = 0; i < length; i++) {
-                    if ( that.handler_events[i][0] === e.data.channel && that.handler_events[i][1] === e.data.event) {
-                        that.handler_events[i][2](e.data.data, e.data.channel, e.data.event);
+                    if ( that.handler_events[i][0] === channel && that.handler_events[i][1] === event) {
+                        that.handler_events[i][2](e.data, channel, event);
                     }
                 }
             }else{
